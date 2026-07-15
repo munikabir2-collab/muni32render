@@ -85,25 +85,42 @@ def home():
 def signup_page(request: Request):
     return templates.TemplateResponse("signup.html", {"request": request})
 
+from sqlalchemy.exc import IntegrityError
+
 @app.post("/signup")
 def signup(
-    username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    # Check if email already exists
+    existing_user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
 
-    user = models.User(
-        username=username,
-        email=email,
-        password=hash_password(password)
-    )
+    if existing_user:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Email already registered"}
+        )
 
-    db.add(user)
-    db.commit()
+    try:
+        user = models.User(
+            email=email,
+            password=hash_password(password)
+        )
 
-    return RedirectResponse("/login", status_code=303)
+        db.add(user)
+        db.commit()
 
+        return RedirectResponse("/login", status_code=303)
+
+    except IntegrityError:
+        db.rollback()
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Database schema does not match the application. Check the users table."}
+        )
 # ---------------- LOGIN ----------------
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
