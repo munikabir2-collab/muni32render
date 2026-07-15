@@ -86,10 +86,22 @@ def signup_page(request: Request):
     return templates.TemplateResponse("signup.html", {"request": request})
 
 @app.post("/signup")
-def signup(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    user = models.User(email=email, password=hash_password(password))
+def signup(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+
+    user = models.User(
+        username=username,
+        email=email,
+        password=hash_password(password)
+    )
+
     db.add(user)
     db.commit()
+
     return RedirectResponse("/login", status_code=303)
 
 # ---------------- LOGIN ----------------
