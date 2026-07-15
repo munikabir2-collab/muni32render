@@ -43,12 +43,23 @@ async def websocket_logs(websocket: WebSocket):
 async def error_handler(request: Request, call_next):
     try:
         return await call_next(request)
+
     except Exception as e:
+        import traceback
+
+        error = traceback.format_exc()
+
+        print("================ ERROR ================")
+        print(error)
+        print("========================================")
+
         return JSONResponse(
             status_code=500,
-            content={"error": str(e)}
+            content={
+                "error": str(e),
+                "trace": error
+            }
         )
-
 # ---------------- DB ----------------
 def get_db():
     db = SessionLocal()
