@@ -1,7 +1,1 @@
-#python-3.11.9
-fastapi
-uvicorn
-jinja2
-sqlalchemy
-passlib[bcrypt]
-psycopg2-binary
+python-3.11.9
