@@ -56,3 +56,14 @@ def deploy_project(project_path, project_name, project_id):
         return {
             "error": str(e)
         }
+
+
+
+import asyncio
+
+async def send_log(message):
+    from main import clients
+
+    for client in clients:
+        await client.send_text(message)
+                

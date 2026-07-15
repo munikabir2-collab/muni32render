@@ -6,7 +6,7 @@ import subprocess
 import os
 import re
 import models
-
+from fastapi import WebSocket
 from database import engine, SessionLocal
 from auth import hash_password, verify_password
 from deploy_service import deploy_project
@@ -20,6 +20,23 @@ models.Base.metadata.create_all(bind=engine)
 
 # ✅ Ensure folders exist
 os.makedirs("projects", exist_ok=True)
+
+clients = []
+
+@app.websocket("/ws/logs")
+async def websocket_logs(websocket: WebSocket):
+    await websocket.accept()
+    clients.append(websocket)
+
+    try:
+        while True:
+            await websocket.receive_text()
+    except:
+        clients.remove(websocket)
+
+
+
+
 
 # ---------------- ERROR HANDLER ----------------
 @app.middleware("http")
@@ -248,3 +265,16 @@ def reset(db: Session = Depends(get_db)):
     db.query(models.Project).delete()
     db.commit()
     return {"message": "All projects deleted"}
+
+@app.get("/delete/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+
+    project = db.query(models.Project).filter(
+        models.Project.id == project_id
+    ).first()
+
+    if project:
+        db.delete(project)
+        db.commit()
+
+    return RedirectResponse("/dashboard", status_code=303)    
